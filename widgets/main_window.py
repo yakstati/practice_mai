@@ -17,7 +17,7 @@ class MainWindow(QWidget):
         layout = QVBoxLayout()
 
         layout.addWidget(QLabel("Широта приёмного пункта (°):"))
-        self.lat_edit = QLineEdit("55.812843")
+        self.lat_edit = QLineEdit("55.812843")     # башня МАИ
         layout.addWidget(self.lat_edit)
 
         layout.addWidget(QLabel("Долгота приёмного пункта (°):"))

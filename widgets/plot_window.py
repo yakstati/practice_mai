@@ -30,20 +30,39 @@ class PlotWindow(QWidget):
         fig.clf()
         ax = fig.add_subplot(111, projection='3d')
 
-        ax.plot(self.df['x'], self.df['y'], self.df['z'], color='gray', alpha=0.5, label='Траектория ИСЗ')
+        ax.plot(self.df['x'], self.df['y'], self.df['z'],
+                color='gray', alpha=0.5, label='Траектория ИСЗ')
 
         visible_df = self.df[self.df['visible']]
-        ax.scatter(visible_df['x'], visible_df['y'], visible_df['z'], color='red', s=10, label='Видимость')
+        ax.scatter(visible_df['x'], visible_df['y'], visible_df['z'],
+                color='red', s=10, label='Видимость')
 
         pp_x, pp_y, pp_z = self.pp_xyz
         ax.scatter(pp_x, pp_y, pp_z, color='blue', s=50, label='Приёмный пункт')
 
         u = np.linspace(0, 2*np.pi, 100)
         v = np.linspace(0, np.pi, 100)
+
+        # отрисовка Земли (можно нацепить текстуру!) 
         xe = R_earth * np.outer(np.cos(u), np.sin(v))
         ye = R_earth * np.outer(np.sin(u), np.sin(v))
         ze = R_earth * np.outer(np.ones_like(u), np.cos(v))
         ax.plot_surface(xe, ye, ze, color='lightblue', alpha=0.3)
+
+        # выставляем лимиты осей одинаковыми, чтобы Земля визульно не плющилась (гпт)
+        max_range = np.array([
+            self.df['x'].max() - self.df['x'].min(),
+            self.df['y'].max() - self.df['y'].min(),
+            self.df['z'].max() - self.df['z'].min()
+        ]).max() / 2.0
+
+        mid_x = (self.df['x'].max() + self.df['x'].min()) / 2.0
+        mid_y = (self.df['y'].max() + self.df['y'].min()) / 2.0
+        mid_z = (self.df['z'].max() + self.df['z'].min()) / 2.0
+
+        ax.set_xlim(mid_x - max_range, mid_x + max_range)
+        ax.set_ylim(mid_y - max_range, mid_y + max_range)
+        ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
         ax.legend()
         ax.set_title("3D траектория ИСЗ")

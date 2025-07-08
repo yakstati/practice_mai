@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 GM = 3.986004418e14  # м³/с²
 
 def calculate_satellite_trajectory(lat_deg, lon_deg):
-    # начальные условия
+    # начальные условия из ОДК ГЛОНАСС
     x0 = 7003.008789e3
     y0 = -12206.626953e3
     z0 = 21280.765625e3
@@ -16,21 +16,21 @@ def calculate_satellite_trajectory(lat_deg, lon_deg):
 
     y0_vec = [x0, y0, z0, vx0, vy0, vz0]
 
-    t_span = (0, 86400)
-    t_eval = np.arange(0, 86401, 60)
+    t_span = (0, 86400) # моделяция на 1 день
+    t_eval = np.arange(0, 86401, 60) # шаг - минута
 
-    R_earth = 6378137.0
+    R_earth = 6378137.0   # для отрисовки Земли
     lat_rad = np.deg2rad(lat_deg)
     lon_rad = np.deg2rad(lon_deg)
 
-    pp_x = R_earth * np.cos(lat_rad) * np.cos(lon_rad)
+    pp_x = R_earth * np.cos(lat_rad) * np.cos(lon_rad)  # перевод в XYZ
     pp_y = R_earth * np.cos(lat_rad) * np.sin(lon_rad)
     pp_z = R_earth * np.sin(lat_rad)
     r_pp_vec = np.array([pp_x, pp_y, pp_z])
 
     sin_h0 = np.sin(np.deg2rad(5))
 
-    def sat_motion(t, y):
+    def sat_motion(t, y):        # система ДУ     (спросить нужно ли моделировать на исходной системе)
         x, y_, z, vx, vy, vz = y
         r = np.sqrt(x**2 + y_**2 + z**2)
         ax = -GM * x / r**3
@@ -38,7 +38,7 @@ def calculate_satellite_trajectory(lat_deg, lon_deg):
         az = -GM * z / r**3
         return [vx, vy, vz, ax, ay, az]
 
-    sol = solve_ivp(
+    sol = solve_ivp(          # интегрирование РК45
         sat_motion,
         t_span,
         y0_vec,
@@ -49,16 +49,16 @@ def calculate_satellite_trajectory(lat_deg, lon_deg):
     )
 
     visible_flags = []
-    for i in range(len(sol.t)):
+    for i in range(len(sol.t)):                  # сохранение интервалов
         sat_pos = np.array([sol.y[0, i], sol.y[1, i], sol.y[2, i]])
         rel_vec = sat_pos - r_pp_vec
         norm_rel = np.linalg.norm(rel_vec)
         norm_pp = np.linalg.norm(r_pp_vec)
         cos_theta = np.dot(rel_vec, r_pp_vec) / (norm_rel * norm_pp)
         visible = cos_theta >= sin_h0
-        visible_flags.append(visible)
+        visible_flags.append(visible)          
 
-    df = pd.DataFrame({
+    df = pd.DataFrame({   
         'time_sec': sol.t,
         'x': sol.y[0],
         'y': sol.y[1],
