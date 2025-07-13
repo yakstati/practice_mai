@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 
 # константы
 GM = 3.986004418e14  # м³/с²
+ae = 6378136
+J02 = 1082625.75e-9
+wz = 7.2921151467e-5
 
 def calculate_satellite_trajectory(lat_deg, lon_deg):
     # начальные условия из ОДК ГЛОНАСС
@@ -31,13 +34,51 @@ def calculate_satellite_trajectory(lat_deg, lon_deg):
 
     sin_h0 = np.sin(np.deg2rad(5))
 
-    def sat_motion(t, y):        # система ДУ     (спросить нужно ли моделировать на исходной системе)
+    '''def sat_motion(t, y):        # система ДУ     (спросить нужно ли моделировать на исходной системе)
         x, y_, z, vx, vy, vz = y
         r = np.sqrt(x**2 + y_**2 + z**2)
         ax = -GM * x / r**3
         ay = -GM * y_ / r**3
         az = -GM * z / r**3
+        return [vx, vy, vz, ax, ay, az]'''
+    def sat_motion(t, y):
+        x, y_, z, vx, vy, vz = y
+
+        r = np.sqrt(x**2 + y_**2 + z**2)
+
+        GM = 3.986004418e14
+        J2 = 1.08262575e-3
+        ae = 6378136.0
+        omega3 = 7.292115467e-5
+
+        # центральное притяжение
+        ax_central = -GM * x / r**3
+        ay_central = -GM * y_ / r**3
+        az_central = -GM * z / r**3
+
+        # возмущения J2
+        factor_J2 = (3/2) * J2 * GM * ae**2 / r**5
+        ax_J2 = factor_J2 * x * (1 - 5 * (z**2 / r**2))
+        ay_J2 = factor_J2 * y_ * (1 - 5 * (z**2 / r**2))
+        az_J2 = factor_J2 * z * (3 - 5 * (z**2 / r**2))
+
+        # центробежные ускорения
+        ax_rot = omega3**2 * x
+        ay_rot = omega3**2 * y_
+        az_rot = 0
+
+        # кориолисовы ускорения
+        ax_cor = 2 * omega3 * vy
+        ay_cor = -2 * omega3 * vx
+        az_cor = 0
+
+        # суммируем всё
+        ax = ax_central - ax_J2 + ax_rot + ax_cor
+        ay = ay_central - ay_J2 + ay_rot + ay_cor
+        az = az_central - az_J2 + az_rot + az_cor
+
         return [vx, vy, vz, ax, ay, az]
+
 
     sol = solve_ivp(          # интегрирование РК45
         sat_motion,
