@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from widgets.dynamic_plot_window import DynamicPlotWindow
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,6 +15,10 @@ class PlotWindow(QWidget):
 
         self.canvas = FigureCanvas(plt.figure())
         layout.addWidget(self.canvas)
+        self.evolution_button = QPushButton("Эволюция системы")
+        self.evolution_button.clicked.connect(self.open_dynamic_window)
+        layout.addWidget(self.evolution_button)
+
 
         self.save_button = QPushButton("Сохранить график в PNG")
         self.save_button.clicked.connect(self.save_plot)
@@ -24,6 +29,11 @@ class PlotWindow(QWidget):
         self.df = df
         self.pp_xyz = pp_xyz
         self.plot()
+
+    def open_dynamic_window(self):
+        self.dynamic_window = DynamicPlotWindow(self.df, self.pp_xyz)
+        self.dynamic_window.show()
+
 
     def plot(self):
         fig = self.canvas.figure

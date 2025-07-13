@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 from datetime import datetime, timedelta
 
+# константы
 GM = 3.986004418e14  # м³/с²
 
 def calculate_satellite_trajectory(lat_deg, lon_deg):
@@ -19,7 +20,7 @@ def calculate_satellite_trajectory(lat_deg, lon_deg):
     t_span = (0, 86400) # моделяция на 1 день
     t_eval = np.arange(0, 86401, 60) # шаг - минута
 
-    R_earth = 6378137.0   # для отрисовки Земли
+    R_earth = 6378137.0  
     lat_rad = np.deg2rad(lat_deg)
     lon_rad = np.deg2rad(lon_deg)
 
